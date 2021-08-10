@@ -159,11 +159,15 @@ tests/data
 examples/*/outputs
 examples/*/NeMo_experiments
 examples/*/nemo_experiments
+tutorials/*/nemo_experiments
+tutorials/*/lightning_logs
 examples/*/.hydra
 examples/*/wandb
 examples/*/data
+tutorials/*/*.nemo
 wandb
 dump.py
+vocab/
 
 docs/sources/source/test_build/
 
