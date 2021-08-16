@@ -117,10 +117,16 @@ ASR (Automatic Speech Recognition)
 Data Preparation:
 ~~~~~~~~~~~~~~~~
 
-**Recommendated Data Format**
+**Recommended Data Format**
 
   * Sample Rate = 16 kHz audio
   * Channel = Mono
+  
+To convert data in recommended format:
+  
+.. code-block:: bash
+   
+   run `bash resample.sh`
   
 **Dataset Format**: A folder containing all audio_files ``(.wav)`` with a '.txt' text file in format audio_filename(without_extension) with its transcription e.g
   - A folder name(urdu_dataset) contains 4 files i.e 3-audio_files 1-transcription_file  
