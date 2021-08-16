@@ -26,17 +26,9 @@
   :alt: Code style: black
 
 .. _main-readme:
-**NVIDIA NeMo**
+**NVIDIA NeMo ASR URDU**
 ===============
 
-Introduction
-------------
-
-NVIDIA NeMo is a conversational AI toolkit built for researchers working on automatic speech recognition (ASR), natural language processing (NLP), and text-to-speech synthesis (TTS).
-The primary objective of NeMo is to help researchers from industry and academia to reuse prior work (code and pretrained models and make it easier to create new `conversational AI models <https://developer.nvidia.com/conversational-ai#started>`_.
-
-
-`Introductory video. <https://www.youtube.com/embed/wBgpMf_KQVw>`_
 
 Key Features
 ------------
@@ -47,25 +39,6 @@ Key Features
     * `Speaker Recognition <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/asr/speaker_recognition/intro.html>`_: SpeakerNet
     * `Speaker Diarization <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/asr/speaker_diarization/intro.html>`_: MarbleNet + SpeakerNet
     * `NGC collection of pre-trained speech processing models. <https://ngc.nvidia.com/catalog/collections/nvidia:nemo_asr>`_
-* Natural Language Processing
-    * `Compatible with Hugging Face Transformers and NVIDIA Megatron <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/nlp/megatron_finetuning.html>`_
-    * `Neural Machine Translation (NMT) <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/nlp/machine_translation.html>`_
-    * `Punctuation and Capitalization <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/nlp/punctuation_and_capitalization.html>`_
-    * `Token classification (named entity recognition) <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/nlp/token_classification.html>`_
-    * `Text classification <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/nlp/text_classification.html>`_
-    * `Joint Intent and Slot Classification <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/nlp/joint_intent_slot.html>`_
-    * `BERT pre-training <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/nlp/bert_pretraining.html>`_
-    * `Question answering <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/nlp/question_answering.html>`_
-    * `GLUE benchmark <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/nlp/glue_benchmark.html>`_
-    * `Information retrieval <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/nlp/information_retrieval.html>`_
-    * `Entity Linking <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/nlp/entity_linking.html>`_
-    * `Dialogue State Tracking <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/nlp/sgd_qa.html>`_
-    * `NGC collection of pre-trained NLP models. <https://ngc.nvidia.com/catalog/collections/nvidia:nemo_nlp>`_
-* `Speech synthesis (TTS) <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/tts/intro.html#>`_
-    * Spectrogram generation: Tacotron2, GlowTTS, FastSpeech2, FastPitch, FastSpeech2
-    * Vocoders: WaveGlow, SqueezeWave, UniGlow, MelGAN, HiFiGAN
-    * End-to-end speech generation: FastPitch_HifiGan_E2E, FastSpeech2_HifiGan_E2E
-    * `NGC collection of pre-trained TTS models. <https://ngc.nvidia.com/catalog/collections/nvidia:nemo_tts>`_
 
 
 Built for speed, NeMo can utilize NVIDIA's Tensor Cores and scale out training to multiple GPUs and multiple nodes.
@@ -168,16 +141,44 @@ If you chose to work with main branch, we recommend using NVIDIA's PyTorch conta
     -p 8888:8888 -p 6006:6006 --ulimit memlock=-1 --ulimit \
     stack=67108864 --device=/dev/snd nvcr.io/nvidia/pytorch:21.05-py3
 
-Examples
---------
+Training and Testing:
+---------------------
 
-Many example can be found under `"Examples" <https://github.com/NVIDIA/NeMo/tree/stable/examples>`_ folder.
+Training from Scratch:
+~~~~~~~~~~~~~~~~~~~~~~
 
+Step#1 Create Manifest file
 
-Contributing
-------------
+.wav File: 
+python scripts/dataset_processing/get_urdu_data.py [--dir data_dir] output
+.flac to .wav file:
+python scripts/dataset_processing/get_2_urdu.py [--dir data_dir] output
+python scripts/dataset_processing/process_urdu_data.py  [--data_root data_dir]
 
-We welcome community contributions! Please refer to the  `CONTRIBUTING.md <https://github.com/NVIDIA/NeMo/blob/stable/CONTRIBUTING.md>`_ CONTRIBUTING.md for the process.
+Step#2 Create Vocab file/Labels
+
+python scripts/tokenizers/process_asr_text_tokenizer.py [--manifest manifest_file] [--data_root output_dir]
+
+Step#3
+Make modifications to the configuration file [examples/asr/conf/model/config.yaml]
+1. lables: &labels [vocab array(generated from Step#2)]
+2. [Optional] (Also can be set in arguments) model.train_ds.manifest_filepath: [path_to_train_manifest.json]
+3. [Optional] (Also can be set in arguments) model.validation_ds.manifest_filepath: [path_to_valid_manifest.json]
+4. [Optional] (Also can be set in arguments) model.test_ds.manifest_filepath: [path_to_test_manifest.json]
+5. num_classes: [len(vocab)]
+6. [If required (for CUDA OOM)] model.train_ds.batch_size: [32]( decrease batch_size respectively)
+7. [If required (for CUDA OOM)] model.validation_ds.batch_size: [32]
+8. [If required (for CUDA OOM)] model.test_ds.batch_size: [32]
+
+Step#4
+run jupyter notebook <https://github.com/NVIDIA/NeMo/tree/main/tutorials/asr/ASR_Urdu_Train_from_scratch.ipynb>
+
+Transfer Learning:
+~~~~~~~~~~~~~~~~~~
+
+Follow steps from 1 to 3
+
+run jupyter notebook <https://github.com/NVIDIA/NeMo/tree/main/tutorials/asr/ASR_Urdu_Transfer_Learning>
 
 License
 -------

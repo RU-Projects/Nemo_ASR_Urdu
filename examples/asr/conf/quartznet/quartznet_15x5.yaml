@@ -5,7 +5,7 @@ model:
   repeat: &repeat 5
   dropout: &dropout 0.0
   separable: &separable true
-  labels: &labels /home/hood/KK/MediaAnalysis/Code%20Repos/kashbah_ncai/NeMo/vocab/dl_old_train/tokenizer_wpe_v1024/vocab.txt
+  labels: &labels ['ی', 'و', 'ٹ', 'ب', ' ', 'ن', 'ے', '8', '0', 'ل', 'ا', 'ک', 'ھ', 'س', 'ز', 'ئ', 'د', 'خ', 'ف', 'ض', 'ط', 'ہ', 'ڈ', 'ع', 'ر', 'ں', 'ظ', 'م', 'ِ', 'ش', '’', '‘', '،', 'ٓ', 'ت', 'پ', '\xa0', 'ص', 'چ', 'گ', '2', '9', 'ج', 'ق', 'ء']
   # labels: &labels [" ", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
   #                  "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "'"]
 
@@ -224,7 +224,7 @@ model:
   decoder:
     _target_: nemo.collections.asr.modules.ConvASRDecoder
     feat_in: *enc_filters
-    num_classes: 105
+    num_classes: 45
     vocabulary: *labels
 
   optim:
