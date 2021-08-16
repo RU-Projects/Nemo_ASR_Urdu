@@ -1,32 +1,6 @@
 
-|status| |documentation| |license| |lgtm_grade| |lgtm_alerts| |black|
-
-.. |status| image:: http://www.repostatus.org/badges/latest/active.svg
-  :target: http://www.repostatus.org/#active
-  :alt: Project Status: Active – The project has reached a stable, usable state and is being actively developed.
-
-.. |documentation| image:: https://readthedocs.com/projects/nvidia-nemo/badge/?version=main
-  :alt: Documentation
-  :target: https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/
-
-.. |license| image:: https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg
-  :target: https://github.com/NVIDIA/NeMo/blob/master/LICENSE
-  :alt: NeMo core license and license for collections in this repo
-
-.. |lgtm_grade| image:: https://img.shields.io/lgtm/grade/python/g/NVIDIA/NeMo.svg?logo=lgtm&logoWidth=18
-  :target: https://lgtm.com/projects/g/NVIDIA/NeMo/context:python
-  :alt: Language grade: Python
-
-.. |lgtm_alerts| image:: https://img.shields.io/lgtm/alerts/g/NVIDIA/NeMo.svg?logo=lgtm&logoWidth=18
-  :target: https://lgtm.com/projects/g/NVIDIA/NeMo/alerts/
-  :alt: Total alerts
-
-.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
-  :target: https://github.com/psf/black
-  :alt: Code style: black
-
 .. _main-readme:
-**NVIDIA NeMo ASR URDU**
+**Nemo ASR URDU**
 ===============
 
 
@@ -35,11 +9,7 @@ Key Features
 
 * Speech processing
     * `Automatic Speech recognition (ASR) <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/asr/intro.html>`_: Jasper, QuartzNet, CitriNet, Conformer
-    * `Speech Classification <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/asr/speech_classification/intro.html>`_: MatchboxNet (command recognition), MarbleNet (voice activity detection)
-    * `Speaker Recognition <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/asr/speaker_recognition/intro.html>`_: SpeakerNet
-    * `Speaker Diarization <https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/asr/speaker_diarization/intro.html>`_: MarbleNet + SpeakerNet
     * `NGC collection of pre-trained speech processing models. <https://ngc.nvidia.com/catalog/collections/nvidia:nemo_asr>`_
-
 
 Built for speed, NeMo can utilize NVIDIA's Tensor Cores and scale out training to multiple GPUs and multiple nodes.
 
@@ -141,45 +111,272 @@ If you chose to work with main branch, we recommend using NVIDIA's PyTorch conta
     -p 8888:8888 -p 6006:6006 --ulimit memlock=-1 --ulimit \
     stack=67108864 --device=/dev/snd nvcr.io/nvidia/pytorch:21.05-py3
 
-Training and Testing:
----------------------
+ASR (Automatic Speech Recognition)
+----------------------------------
 
-Training from Scratch:
+Data Preparation:
+~~~~~~~~~~~~~~~~
+
+**Recommendated Data Format**
+
+  * Sample Rate = 16 kHz audio
+  * Channel = Mono
+  
+**Dataset Format**: A folder containing all audio_files ``(.wav)`` with a '.txt' text file in format audio_filename(without_extension) with its transcription e.g
+  - A folder name(urdu_dataset) contains 4 files i.e 3-audio_files 1-transcription_file  
+      * 001.wav
+      * 002.wav
+      * 003.wav
+      * dataset.txt 
+     **dataset.txt format**:
+      
+.. code-block:: bash
+
+        001 پیارے ابو جان میں آپ کو لینے آئی ہوں ہم اپنے ملک جائیں گے
+        002 سفر کا بندوبست کیا کیا 
+        003 ذہن ساتھ نہیں دے رہا تھا کہ یہ کیا ہو رہا ہے
+
+
+Create Manifest file
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Step#1 Create Manifest file
+Each line of the manifest should be in the following format:
 
-.wav File: 
-python scripts/dataset_processing/get_urdu_data.py [--dir data_dir] output
+.. code-block:: bash
+
+  {"audio_filepath": "/path/to/audio.wav", "text": "the transcription of the utterance", "duration": 23.147}
+
+
+The audio_filepath field should provide an absolute path to the .wav file corresponding to the utterance. The text field should contain the full transcript for the utterance, and the duration field should reflect the duration of the utterance in seconds.
+
+.wav file:
+
+.. code-block:: bash
+
+    python scripts/dataset_processing/get_urdu_data.py [--dir data_dir] output
+
 .flac to .wav file:
-python scripts/dataset_processing/get_2_urdu.py [--dir data_dir] output
-python scripts/dataset_processing/process_urdu_data.py  [--data_root data_dir]
 
-Step#2 Create Vocab file/Labels
+.. code-block:: bash
 
-python scripts/tokenizers/process_asr_text_tokenizer.py [--manifest manifest_file] [--data_root output_dir]
+    python scripts/dataset_processing/get_2_urdu.py [--dir data_dir] output
+    or
+    python scripts/dataset_processing/process_urdu_data.py  [--data_root data_dir]
 
-Step#3
+Create Vocab file/Labels
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   python scripts/tokenizers/process_asr_text_tokenizer.py [--manifest manifest_file] [--data_root output_dir]
+   
+  
+Dataset Configurations:
+~~~~~~~~~~~~~~~~~~~~~~~
+
 Make modifications to the configuration file [examples/asr/conf/model/config.yaml]
-1. lables: &labels [vocab array(generated from Step#2)]
-2. [Optional] (Also can be set in arguments) model.train_ds.manifest_filepath: [path_to_train_manifest.json]
-3. [Optional] (Also can be set in arguments) model.validation_ds.manifest_filepath: [path_to_valid_manifest.json]
-4. [Optional] (Also can be set in arguments) model.test_ds.manifest_filepath: [path_to_test_manifest.json]
-5. num_classes: [len(vocab)]
-6. [If required (for CUDA OOM)] model.train_ds.batch_size: [32]( decrease batch_size respectively)
-7. [If required (for CUDA OOM)] model.validation_ds.batch_size: [32]
-8. [If required (for CUDA OOM)] model.test_ds.batch_size: [32]
 
-Step#4
-run jupyter notebook <https://github.com/NVIDIA/NeMo/tree/main/tutorials/asr/ASR_Urdu_Train_from_scratch.ipynb>
+* lables: &labels [vocab array(generated from Step#2)]
+* [Optional] model.train_ds.manifest_filepath: [path_to_train_manifest.json]
+* [Optional] model.validation_ds.manifest_filepath: [path_to_valid_manifest.json]
+* [Optional] model.test_ds.manifest_filepath: [path_to_test_manifest.json]
+* num_classes: [len(vocab)]
+* [If required (for CUDA OOM)] (decrease batch_size respectively)
+    * model.train_ds.batch_size: [32]
+    * [model.validation_ds.batch_size: [32]
+    * model.test_ds.batch_size: [32]
+    
+
+Tokenization Configurations:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Some models utilize sub-word encoding via an external tokenizer instead of explicitly defining their vocabulary.
+
+For such models, a tokenizer section is added to the model config. ASR models currently support two types of custom tokenizers:.
+
+  - bpe
+  - wpe
+
+In order to build custom tokenizers, refer to the ASR_with_Subword_Tokenization notebook available in the ASR tutorials directory.
+
+The following example sets up a SentencePiece Tokenizer at a path specified by the user:
+
+.. code-block:: bash
+
+    model:
+      ...
+      tokenizer:
+        dir: "<path to the directory that contains the custom tokenizer files>"
+        type: "bpe"  # can be "bpe" or "wpe"
+
+
+Training & Testing
+~~~~~~~~~~~~~~~~~~~
+        
+Fine-tuning Configurations:
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+All ASR scripts support easy fine-tuning by partially/fully loading the pretrained weights from a checkpoint into the currently instantiated model. Pre-trained weights can be provided in multiple ways -
+
+- Providing a path to a NeMo model ``(via init_from_nemo_model)``
+
+.. code-block:: bash
+
+    python examples/asr/script_to_<script_name>.py \
+        --config-path=<path to dir of configs> \
+        --config-name=<name of config without .yaml>) \
+        model.train_ds.manifest_filepath="<path to manifest file>" \
+        model.validation_ds.manifest_filepath="<path to manifest file>" \
+        trainer.gpus=-1 \
+        trainer.max_epochs=50 \
+        +init_from_nemo_model="<path to .nemo model file>"
+
+- Providing a name of a pretrained NeMo model (which will be downloaded via the cloud) ``(via init_from_pretrained_model)``
+
+.. code-block:: bash
+
+    python examples/asr/script_to_<script_name>.py \
+        --config-path=<path to dir of configs> \
+        --config-name=<name of config without .yaml>) \
+        model.train_ds.manifest_filepath="<path to manifest file>" \
+        model.validation_ds.manifest_filepath="<path to manifest file>" \
+        trainer.gpus=-1 \
+        trainer.max_epochs=50 \
+        +init_from_pretrained_model="<name of pretrained checkpoint>"
+
+
+- Providing a path to a Pytorch Lightning checkpoint file ``(via init_from_ptl_ckpt)``
+
+.. code-block:: bash
+
+    python examples/asr/script_to_<script_name>.py \
+        --config-path=<path to dir of configs> \
+        --config-name=<name of config without .yaml>) \
+        model.train_ds.manifest_filepath="<path to manifest file>" \
+        model.validation_ds.manifest_filepath="<path to manifest file>" \
+        trainer.gpus=-1 \
+        trainer.max_epochs=50 \
+        +init_from_ptl_ckpt="<name of pytorch lightning checkpoint>"
+
+
+Training from Scratch:
+~~~~~~~~~~~~~~~~~~~~~
+
+run jupyter notebook `"ASR_Urdu_Train_from_scratch" <https://github.com/kkiyani/Nemo_ASR_Urdu/blob/main/tutorials/asr/ASR_Urdu_Train_from_scratch.ipynb>`_
+
+or
+
+Basic run (on CPU for 50 epochs):
+
+.. code-block:: bash
+  
+    python examples/asr/speech_to_text.py \
+        # (Optional: --config-path=<path to dir of configs> --config-name=<name of config without .yaml>) \
+        model.train_ds.manifest_filepath="<path to manifest file>" \
+        model.validation_ds.manifest_filepath="<path to manifest file>" \
+        trainer.gpus=0 \
+        trainer.max_epochs=50
+        
 
 Transfer Learning:
 ~~~~~~~~~~~~~~~~~~
 
-Follow steps from 1 to 3
+run jupyter notebook `"ASR_Urdu_Transfer_Learning" <https://github.com/kkiyani/Nemo_ASR_Urdu/blob/main/tutorials/asr/ASR_Urdu_Transfer_Learning.ipynb>`_
 
-run jupyter notebook <https://github.com/NVIDIA/NeMo/tree/main/tutorials/asr/ASR_Urdu_Transfer_Learning>
+or
 
-License
--------
-NeMo is under `Apache 2.0 license <https://github.com/NVIDIA/NeMo/blob/stable/LICENSE>`_.
+Basic run (on CPU for 50 epochs):
+
+.. code-block:: bash
+  
+    python examples/asr/speech_to_text.py \
+        # (Optional: --config-path=<path to dir of configs> --config-name=<name of config without .yaml>) \
+        model.train_ds.manifest_filepath="<path to manifest file>" \
+        model.validation_ds.manifest_filepath="<path to manifest file>" \
+        trainer.gpus=0 \
+        trainer.max_epochs=50
+        +init_from_nemo_model="<path to .nemo model file>"
+        +init_from_pretrained_model="<name of pretrained checkpoint>"
+
+Transcribing/Inference:
+~~~~~~~~~~~~~~~~~~~~~~
+
+To perform inference and transcribe a sample of speech after loading the model, use the transcribe() method:
+
+
+    model.transcribe(paths2audio_files=[list of audio files], batch_size=BATCH_SIZE, logprobs=False)
+    
+.. code-block:: bash
+
+  python tutorials/asr/Offline_URDU_ASR.py \
+    --asr_model=<path to .nemo model file>" \
+    --audio_file="<audio file path>"
+    
+    
+.. code-block:: bash
+
+  python examples/asr/transcribe_speech.py \
+    model_path="<path to .nemo model file>" \
+    pretrained_name="<name of pretrained checkpoint>" \
+    audio_dir="<path to directory with audio files>" \
+    dataset_manifest="<path to dataset JSON manifest file (in NeMo format)>" \
+    output_filename=""
+    
+ 
+.. code-block:: bash
+
+  python examples/asr/transcribe_urdu_speech.py \
+    model_path="<path to .nemo model file>"\
+    pretrained_name="<name of pretrained checkpoint>" \
+    audio_dir="<file path>" \
+    dataset_manifest="<path to dataset JSON manifest file (in NeMo format)>" \
+
+
+**The audio files should be 16KHz monochannel wav files.**
+
+Calcualte WER:
+~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+  python examples/asr/speech_to_text_infer.py \
+    --asr_model=<path to .nemo model file>" \
+    --dataset="<path to evaluation data(manifest_file)>" \
+    --dont_normalize_text \
+       
+
+Results:
+--------
+
+Transfer Learning 
+~~~~~~~~~~~~~~~~~
+
+QuartzNet - quartznet15x5
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Encoder**: QuartzNet15x5Base-En
+
+  [PretrainedModelInfo(pretrained_model_name=QuartzNet15x5Base-En,
+    description=QuartzNet15x5 model trained on six datasets: LibriSpeech, Mozilla Common Voice (validated clips from en_1488h_2019-12-10), WSJ, Fisher, Switchboard, and NSC Singapore English. It was trained with Apex/Amp optimization level O1 for 600 epochs. The model achieves a WER of 3.79% on LibriSpeech dev-clean, and a WER of 10.05% on dev-other. Please visit https://ngc.nvidia.com/catalog/models/nvidia:nemospeechmodels for further details.,
+    location=https://api.ngc.nvidia.com/v2/models/nvidia/nemospeechmodels/versions/1.0.0a5/files/QuartzNet15x5Base-En.nemo)]
+ 
+**Decoder**: SEECS_Old
+
+Example YAML Config
+~~~~~~~~~~~~~~~~~~~
+
+Go to `"quartznet_15x5dr.yml" <https://github.com/kkiyani/Nemo_ASR_Urdu/blob/main/examples/asr/conf/quartznet/quartznet_15x5.yaml>`_
+
+**Summary**
+
+- Train on: RTX 2080 Ti
+- Training hours per epoch: ~1.5 h0urs
+
+**Pretrained Model**, go to `"drive" <https://drive.google.com/drive/folders/1Tdqbsn6UvkuRFqWV0ujBYitH8ONqq5j8?usp=sharing>`_
+
+**Error Rates**
+
++-----------------+-------+----------------+-----------------+-------+--------------------+
+| **Train-Data**  |  SP   | **Test-Data**  | Test batch size | Epoch |      WER           |
++=================+=======+================+=================+=======+====================+
+|  _SEECS_OLD_    | 78133 |   _SEECS_new_  |        4        |  12   |   0.33 (greedy)    |
++-----------------+-------+----------------+-----------------+-------+--------------------+
