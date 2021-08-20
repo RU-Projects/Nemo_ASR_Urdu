@@ -379,6 +379,14 @@ Go to `"quartznet_15x5dr.yml" <https://github.com/kkiyani/Nemo_ASR_Urdu/blob/mai
 
 **Pretrained Model**, go to `"drive" <https://drive.google.com/drive/folders/1Tdqbsn6UvkuRFqWV0ujBYitH8ONqq5j8?usp=sharing>`_
 
+**Training Batch WER:**
+
+.. image:: ./images/version_21/training_batch_wer.svg
+
+**Training Loss:**
+
+.. image:: ./images/version_21/training_loss.svg
+
 **Error Rates**
 
 +-----------------+-------+----------------+-----------------+-------+--------------------+
